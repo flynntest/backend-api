@@ -1,0 +1,33 @@
+name: Consumer Backend → Platform DAG Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      enable_security:
+        description: 'Enable security scanning'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  # Consumer organization calling platform organization workflow
+  call-platform-dag:
+    name: "🏢 flynntest → flynn-actions DAG"
+    uses: flynn-actions/platform-workflows/.github/workflows/standard-ci-cd.yml@main
+    with:
+      environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+      node_version: '20'
+      run_tests: true
+      enable_security_scan: ${{ github.event.inputs.enable_security || true }}
